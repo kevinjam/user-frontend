@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -38,7 +38,7 @@ export default function PermitRequestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
-  const load = () => {
+  const load = useCallback(() => {
     if (!token) {
       setLoading(false);
       return;
@@ -55,11 +55,11 @@ export default function PermitRequestsPage() {
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load"))
       .finally(() => setLoading(false));
-  };
+  }, [token]);
 
   useEffect(() => {
     load();
-  }, [token]);
+  }, [load]);
 
   const designIdsWithRequest = new Set(
     permitRequests

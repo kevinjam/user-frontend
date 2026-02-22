@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { useAuth } from "@/contexts/auth-context";
 import { apiLandVerificationGetMine, type LandVerificationItem } from "@/lib/api";
@@ -176,24 +175,24 @@ export default function CertificateDisplayPage({
                   <dd className="font-medium">{String(verification.blockNumber)}</dd>
                 </div>
               )}
-              {verification.propertyOf && (
+              {verification.propertyOf != null ? (
                 <div>
                   <dt className="text-xs text-muted-foreground">Property of</dt>
                   <dd className="font-medium">{String(verification.propertyOf)}</dd>
                 </div>
-              )}
-              {verification.location && (
+              ) : null}
+              {verification.location != null ? (
                 <div className="sm:col-span-2">
                   <dt className="text-xs text-muted-foreground">Location</dt>
                   <dd className="font-medium">{String(verification.location)}</dd>
                 </div>
-              )}
-              {verification.areaSqm != null && (
+              ) : null}
+              {verification.areaSqm != null ? (
                 <div>
                   <dt className="text-xs text-muted-foreground">Area (m²)</dt>
                   <dd className="font-medium">{String(verification.areaSqm)}</dd>
                 </div>
-              )}
+              ) : null}
             </dl>
           </div>
 

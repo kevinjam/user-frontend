@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Select,
@@ -45,14 +44,18 @@ const documentKeys = {
   membershipCertificate: "",
 };
 
+const initialFiles: Record<string, File | null> = Object.fromEntries(
+  Object.keys(documentKeys).map((k) => [k, null])
+) as Record<string, File | null>;
+
 export default function ProfessionalProfilePage() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [profile, setProfile] = useState<ProfessionalProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [professionType, setProfessionType] = useState<"Engineer" | "Architect">("Engineer");
   const [yearsOfExperience, setYearsOfExperience] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
-  const [files, setFiles] = useState<Record<string, File | null>>(documentKeys);
+  const [files, setFiles] = useState<Record<string, File | null>>(initialFiles);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
