@@ -2,26 +2,154 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ============================================
+   UniBuild Design System — Greens & Browns
+   Institutional, professional, South Sudan
+   ============================================ */
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Brand green (forest / ministry) */
+    --green-50: 140 40% 97%;
+    --green-100: 142 38% 92%;
+    --green-200: 144 35% 85%;
+    --green-300: 146 32% 72%;
+    --green-400: 148 28% 52%;
+    --green-500: 152 42% 35%;
+    --green-600: 152 48% 24%;
+    --green-700: 154 52% 18%;
+    --green-800: 155 55% 14%;
+    --green-900: 156 58% 11%;
+    /* Brand brown (earth / warmth) */
+    --brown-50: 30 30% 98%;
+    --brown-100: 28 28% 94%;
+    --brown-200: 26 26% 88%;
+    --brown-300: 25 25% 75%;
+    --brown-400: 24 28% 55%;
+    --brown-500: 26 32% 38%;
+    --brown-600: 26 36% 28%;
+    --brown-700: 27 40% 22%;
+    --brown-800: 28 42% 17%;
+    --brown-900: 28 45% 13%;
+
+    --background: 40 22% 99%;
+    --foreground: 28 45% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 28 45% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 28 45% 13%;
+    /* Primary = dark green */
+    --primary: 152 48% 22%;
+    --primary-foreground: 0 0% 98%;
+    /* Secondary = warm brown */
+    --secondary: 26 36% 26%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 40 22% 96%;
+    --muted-foreground: 26 20% 42%;
+    /* Accent = brown for hovers / highlights */
+    --accent: 28 32% 24%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 18% 90%;
+    --input: 30 18% 90%;
+    --ring: 152 48% 35%;
+    --radius: 0.5rem;
+    --radius-lg: 0.625rem;
+    --chart-1: 152 48% 35%;
+    --chart-2: 26 36% 35%;
+    --chart-3: 152 35% 55%;
+    /* Surfaces for sections */
+    --surface: 40 25% 98%;
+    --surface-elevated: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 28 45% 8%;
+    --foreground: 40 15% 95%;
+    --card: 28 40% 11%;
+    --card-foreground: 40 15% 95%;
+    --popover: 28 40% 11%;
+    --popover-foreground: 40 15% 95%;
+    --primary: 152 42% 38%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 26 30% 28%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 28 30% 18%;
+    --muted-foreground: 40 12% 58%;
+    --accent: 26 28% 30%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 28 25% 22%;
+    --input: 28 25% 22%;
+    --ring: 152 42% 45%;
+    --surface: 28 35% 12%;
+    --surface-elevated: 28 30% 15%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* Focus ring uses brand green */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Soft institutional background (very light green/brown tint) */
+  .bg-surface {
+    background-color: hsl(var(--surface));
+  }
+  .bg-surface-elevated {
+    background-color: hsl(var(--surface-elevated));
+  }
+  /* Subtle pattern overlay for hero/sections */
+  .bg-pattern {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  /* Card with subtle green top border (accent) */
+  .card-accent {
+    @apply relative overflow-hidden rounded-lg border border-border bg-card shadow-sm;
+    box-shadow: 0 1px 3px hsl(var(--primary) / 0.06);
+  }
+  .card-accent::before {
+    content: "";
+    @apply absolute left-0 right-0 top-0 h-1 bg-primary;
+  }
+  /* Sidebar brand strip (green) */
+  .sidebar-brand {
+    @apply bg-primary text-primary-foreground;
+    box-shadow: 0 2px 8px hsl(var(--primary) / 0.25);
+  }
+  /* Nav item active state with brown tint */
+  .nav-item-active {
+    @apply bg-primary/10 text-primary;
+  }
+  .nav-item-active:hover {
+    @apply bg-primary/15;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  /* Brand text colors for headings */
+  .text-brand-green {
+    color: hsl(var(--primary));
+  }
+  .text-brand-brown {
+    color: hsl(var(--secondary));
   }
 }
