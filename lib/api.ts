@@ -249,6 +249,22 @@ export async function apiProfessionalProfileSubmit(
   return handleResponse(res);
 }
 
+/** Upload a file (image or PDF). Returns Cloudinary URL. Field name must be "file". */
+export async function apiUpload(
+  token: string,
+  file: File
+): Promise<{ success: boolean; url: string; publicId?: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${getApiUrl()}/api/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+    credentials: "include",
+  });
+  return handleResponse(res);
+}
+
 // Design submissions (professional: upload design)
 export interface DesignSubmissionData {
   id: string;

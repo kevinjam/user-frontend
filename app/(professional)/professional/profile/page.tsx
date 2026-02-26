@@ -24,9 +24,16 @@ import { useAuth } from "@/contexts/auth-context";
 import {
   apiProfessionalProfileGetMe,
   apiProfessionalProfileSubmit,
+  apiUpload,
   type ProfessionalProfileData,
 } from "@/lib/api";
-import { Upload } from "lucide-react";
+import { Upload, ExternalLink, CheckCircle2 } from "lucide-react";
+
+function isValidDocumentUrl(url: string | undefined): boolean {
+  if (!url || typeof url !== "string") return false;
+  const t = url.trim();
+  return t.length > 0 && (t.startsWith("http://") || t.startsWith("https://"));
+}
 
 const UPLOAD_LABELS: { key: keyof typeof documentKeys; label: string }[] = [
   { key: "nationalId", label: "National ID" },
@@ -56,6 +63,9 @@ export default function ProfessionalProfilePage() {
   const [yearsOfExperience, setYearsOfExperience] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [files, setFiles] = useState<Record<string, File | null>>(initialFiles);
+  /** Document key -> uploaded URL (from profile or from new uploads this session). */
+  const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
+  const [documentsInitialized, setDocumentsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,15 +77,24 @@ export default function ProfessionalProfilePage() {
     apiProfessionalProfileGetMe(token)
       .then((res) => {
         if (res.success && res.data) {
-          setProfile(res.data);
-          setProfessionType((res.data.professionType as "Engineer" | "Architect") ?? "Engineer");
-          setYearsOfExperience(String(res.data.yearsOfExperience ?? ""));
-          setLicenseNumber(res.data.licenseNumber ?? "");
+          const p = res.data;
+          setProfile(p);
+          setProfessionType((p.professionType as "Engineer" | "Architect") ?? "Engineer");
+          setYearsOfExperience(String(p.yearsOfExperience ?? ""));
+          setLicenseNumber(p.licenseNumber ?? "");
+          if (!documentsInitialized && p.documents && typeof p.documents === "object") {
+            const valid: Record<string, string> = {};
+            (Object.entries(p.documents) as [keyof typeof documentKeys, string][]).forEach(([k, v]) => {
+              if (isValidDocumentUrl(v)) valid[k] = v;
+            });
+            if (Object.keys(valid).length > 0) setDocumentUrls(valid);
+            setDocumentsInitialized(true);
+          }
         }
       })
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, documentsInitialized]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,11 +114,15 @@ export default function ProfessionalProfilePage() {
     }
     setIsSubmitting(true);
     try {
-      const documents: Record<string, string> = {};
-      (Object.keys(files) as (keyof typeof documentKeys)[]).forEach((key) => {
-        const f = files[key];
-        if (f) documents[key] = f.name;
-      });
+      const documents: Record<string, string> = { ...documentUrls };
+      const keys = Object.keys(documentKeys) as (keyof typeof documentKeys)[];
+      for (const key of keys) {
+        const file = files[key];
+        if (file) {
+          const uploadRes = await apiUpload(token, file);
+          if (uploadRes.success && uploadRes.url) documents[key] = uploadRes.url;
+        }
+      }
       const res = await apiProfessionalProfileSubmit(token, {
         professionType,
         yearsOfExperience: years,
@@ -107,6 +130,14 @@ export default function ProfessionalProfilePage() {
         documents: Object.keys(documents).length ? documents : undefined,
       });
       setProfile(res.data);
+      const nextUrls: Record<string, string> = {};
+      if (res.data.documents && typeof res.data.documents === "object") {
+        (Object.entries(res.data.documents) as [keyof typeof documentKeys, string][]).forEach(([k, v]) => {
+          if (isValidDocumentUrl(v)) nextUrls[k] = v;
+        });
+      }
+      setDocumentUrls(nextUrls);
+      setFiles(initialFiles);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {
@@ -226,26 +257,46 @@ export default function ProfessionalProfilePage() {
             <div>
               <Label className="mb-3 block">Upload documents</Label>
               <p className="mb-3 text-xs text-muted-foreground">
-                PDF or image. File names will be recorded; full upload integration coming soon.
+                Images (JPEG, PNG, GIF, WebP) or PDF. Files are uploaded to the server; you can replace any document by choosing a new file.
               </p>
               <div className="space-y-3">
-                {UPLOAD_LABELS.map(({ key, label }) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <Input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) =>
-                        setFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))
-                      }
-                      className="max-w-xs cursor-pointer"
-                    />
-                    <Upload className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">{label}</span>
-                    {files[key] && (
-                      <span className="text-xs text-muted-foreground">({files[key]?.name})</span>
-                    )}
-                  </div>
-                ))}
+                {UPLOAD_LABELS.map(({ key, label }) => {
+                  const hasUrl = isValidDocumentUrl(documentUrls[key]);
+                  const hasNewFile = !!files[key];
+                  return (
+                    <div key={key} className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-3">
+                      <Input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf"
+                        onChange={(e) =>
+                          setFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))
+                        }
+                        className="max-w-xs cursor-pointer"
+                      />
+                      <span className="text-sm font-medium text-foreground">{label}</span>
+                      {hasUrl && (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                          <span className="text-xs text-muted-foreground">Uploaded</span>
+                          <a
+                            href={documentUrls[key]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          >
+                            View <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </>
+                      )}
+                      {hasNewFile && !hasUrl && (
+                        <span className="text-xs text-muted-foreground">(New: {files[key]?.name})</span>
+                      )}
+                      {!hasUrl && !hasNewFile && (
+                        <Upload className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
